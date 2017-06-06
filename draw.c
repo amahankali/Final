@@ -8,7 +8,61 @@
 #include "math.h"
 #include "gmath.h"
 
+void swap(double ** a, int i, int j)
+{
+  double * temp = a[i];
+  a[i] = a[j];
+  a[j] = temp;
+}
+
+//sorts points by their y coordinate
+void sortPointsY(double ** vertices, int len)
+{
+  int i, j;
+  for(i = 0; i < len; i++)
+  {
+    int swapCount = 0;
+    for(j = 0; j < len - 1; j++)
+    {
+      if(vertices[j][1] >= vertices[j + 1][1]) 
+      {
+        swapCount++;
+        swap(vertices, j, j + 1);
+      }
+    }
+    if(swapCount == 0) break;
+  }
+}
+
 void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb ) {
+  double ** vertices = (double **) calloc(3, sizeof(double *));
+
+  //initialize list of points
+  int j, k;
+  for(j = 0; j < 3; j++)
+  {
+    vertices[j] = (double *) calloc(3, sizeof(double));
+    for(k = 0; k < 3; k++)
+    {
+      vertices[j][k] = points->m[k][i + j];
+    }
+  }
+
+  //get points in order
+  sortPointsY(vertices, 3);
+  double * B = vertices[0]; double * M = vertices[1]; double * T = vertices[2];
+
+  ////////////////////////////Draw////////////////////////////
+  double * left = (double *) calloc(3, sizeof(double));
+  double * right = (double *) calloc(3, sizeof(double));
+
+  left[0] = right[0] = B[0]; left[1] = right[1] = B[1]; left[2] = right[2] = B[2];
+  double yCurrent = B[1];
+
+  while(yCurrent <= T[1])
+  {
+
+  }
 }
 
 
