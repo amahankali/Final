@@ -356,13 +356,16 @@ void my_main() {
 	    {
 	      //printf("\tcs: %s",op[i].op.box.cs->name);
 	    }
+	    printf("Making box\n");
 	  add_box(tmp,
 		  op[i].op.box.d0[0],op[i].op.box.d0[1],
 		  op[i].op.box.d0[2],
 		  op[i].op.box.d1[0],op[i].op.box.d1[1],
 		  op[i].op.box.d1[2]);
 	  matrix_mult( peek(systems), tmp );
+	  printf("about to draw\n");
 	  draw_polygons(tmp, t, zb, g);
+	  printf("finished box\n");
 	  tmp->lastcol = 0;
 	  break;
 	case LINE:

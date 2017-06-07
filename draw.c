@@ -34,7 +34,11 @@ void sortPointsY(double ** vertices, int len)
   }
 }
 
+
 void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb ) {
+
+  color c;
+  c.red = 0; c.green = 255; c.blue = 0;
   double ** vertices = (double **) calloc(3, sizeof(double *));
 
   //initialize list of points
@@ -53,15 +57,41 @@ void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb ) {
   double * B = vertices[0]; double * M = vertices[1]; double * T = vertices[2];
 
   ////////////////////////////Draw////////////////////////////
-  double * left = (double *) calloc(3, sizeof(double));
-  double * right = (double *) calloc(3, sizeof(double));
+  double * left = (double *) calloc(3, sizeof(double)); //left will travel from B to T
+  double * right = (double *) calloc(3, sizeof(double)); //right will travel from B to M, then M to T
 
   left[0] = right[0] = B[0]; left[1] = right[1] = B[1]; left[2] = right[2] = B[2];
   double yCurrent = B[1];
 
   while(yCurrent <= T[1])
   {
+    if(yCurrent <= M[1])
+    {
+      //left
+      left[0] = B[0] + (T[0] - B[0]) * (yCurrent - B[1]) / (T[1] - B[1]);
+      left[1] = yCurrent;
+      left[2] = B[2] + (T[2] - B[2]) * (yCurrent - B[1]) / (T[1] - B[1]);
 
+      //right
+      right[0] = B[0] + (M[0] - B[0]) * (yCurrent - B[1]) / (M[1] - B[1]);
+      right[1] = yCurrent;
+      right[2] = B[2] + (M[2] - B[2]) * (yCurrent - B[1]) / (M[1] - B[1]);
+    }
+    else
+    {
+      //left
+      left[0] = B[0] + (T[0] - B[0]) * (yCurrent - B[1]) / (T[1] - B[1]);
+      left[1] = yCurrent;
+      left[2] = B[2] + (T[2] - B[2]) * (yCurrent - B[1]) / (T[1] - B[1]);
+
+      //right
+      right[0] = B[0] + (M[0] - B[0]) * (yCurrent - B[1]) / (M[1] - B[1]);
+      right[1] = yCurrent;
+      right[2] = B[2] + (M[2] - B[2]) * (yCurrent - B[1]) / (M[1] - B[1]);
+    }
+    draw_line(left[0], left[1], left[2], right[0], right[1], right[2], s, zb, c);
+    printf("left: (%f, %f, %f) || right: (%f, %f, %f)\n", left[0], left[1], left[2], right[0], right[1], right[2]);
+    yCurrent++;
   }
 }
 
@@ -118,33 +148,9 @@ void draw_polygons( struct matrix *polygons, screen s, zbuffer zb, color c ) {
     if ( normal[2] > 0 ) {
       
       //printf("polygon %d\n", point);
-      /* scanline_convert( polygons, point, s, zb ); */
-      /* c.red = 0; */
-      /* c.green = 255; */
-      /* c.blue = 0; */
-      draw_line( polygons->m[0][point],
-      		 polygons->m[1][point],
-      		 polygons->m[2][point],
-      		 polygons->m[0][point+1],
-      		 polygons->m[1][point+1],
-      		 polygons->m[2][point+1],
-      		 s, zb, c);
-      draw_line( polygons->m[0][point+2],
-      		 polygons->m[1][point+2],
-      		 polygons->m[2][point+2],
-      		 polygons->m[0][point+1],
-      		 polygons->m[1][point+1],
-      		 polygons->m[2][point+1],
-      		 s, zb, c);
-      draw_line( polygons->m[0][point],
-      		 polygons->m[1][point],
-      		 polygons->m[2][point],
-      		 polygons->m[0][point+2],
-      		 polygons->m[1][point+2],
-      		 polygons->m[2][point+2],
-      		 s, zb, c);
-       }
+      scanline_convert( polygons, point, s, zb );
   }
+}
 }
 
 /*======== void add_box() ==========
