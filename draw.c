@@ -8,6 +8,13 @@
 #include "math.h"
 #include "gmath.h"
 
+void free2DArray(double ** a, int len)
+{
+  int i;
+  for(i = 0; i < len; i++) free(a[i]);
+  free(a);
+}
+
 void swap(double ** a, int i, int j)
 {
   double * temp = a[i];
@@ -63,36 +70,45 @@ void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb ) {
   left[0] = right[0] = B[0]; left[1] = right[1] = B[1]; left[2] = right[2] = B[2];
   double yCurrent = B[1];
 
-  while(yCurrent <= T[1])
+  while(yCurrent <= T[1]) //Note that B[1] is never equal to T[1], unless the triangle is degenerate.
   {
-    if(yCurrent <= M[1])
-    {
-      //left
-      left[0] = B[0] + (T[0] - B[0]) * (yCurrent - B[1]) / (T[1] - B[1]);
-      left[1] = yCurrent;
-      left[2] = B[2] + (T[2] - B[2]) * (yCurrent - B[1]) / (T[1] - B[1]);
+    //left
+    left[0] = B[0] + (T[0] - B[0]) * (yCurrent - B[1]) / (T[1] - B[1]);
+    left[1] = yCurrent;
+    left[2] = B[2] + (T[2] - B[2]) * (yCurrent - B[1]) / (T[1] - B[1]);
 
+    if(yCurrent < M[1]) //M[1] > B[1]
+    {
       //right
       right[0] = B[0] + (M[0] - B[0]) * (yCurrent - B[1]) / (M[1] - B[1]);
       right[1] = yCurrent;
       right[2] = B[2] + (M[2] - B[2]) * (yCurrent - B[1]) / (M[1] - B[1]);
+    }
+    else if(yCurrent > M[1])
+    {
+      //right
+      right[0] = M[0] + (T[0] - M[0]) * (yCurrent - M[1]) / (T[1] - M[1]);
+      right[1] = yCurrent;
+      right[2] = M[2] + (T[2] - M[2]) * (yCurrent - M[1]) / (T[1] - M[1]);
     }
     else
     {
-      //left
-      left[0] = B[0] + (T[0] - B[0]) * (yCurrent - B[1]) / (T[1] - B[1]);
-      left[1] = yCurrent;
-      left[2] = B[2] + (T[2] - B[2]) * (yCurrent - B[1]) / (T[1] - B[1]);
-
       //right
-      right[0] = B[0] + (M[0] - B[0]) * (yCurrent - B[1]) / (M[1] - B[1]);
+      right[0] = M[0];
       right[1] = yCurrent;
-      right[2] = B[2] + (M[2] - B[2]) * (yCurrent - B[1]) / (M[1] - B[1]);
+      right[2] = M[2];
     }
     draw_line(left[0], left[1], left[2], right[0], right[1], right[2], s, zb, c);
-    printf("left: (%f, %f, %f) || right: (%f, %f, %f)\n", left[0], left[1], left[2], right[0], right[1], right[2]);
+    //printf("left: (%f, %f, %f) || right: (%f, %f, %f)\n", left[0], left[1], left[2], right[0], right[1], right[2]);
     yCurrent++;
   }
+
+  ///
+  free2DArray(vertices, 3);
+  free(left); free(right);
+  ///
+
+
 }
 
 
