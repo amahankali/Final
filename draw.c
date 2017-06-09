@@ -42,10 +42,8 @@ void sortPointsY(double ** vertices, int len)
 }
 
 
-void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb ) {
+void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb, color c) {
 
-  color c;
-  c.red = 0; c.green = 255; c.blue = 0;
   double ** vertices = (double **) calloc(3, sizeof(double *));
 
   //initialize list of points
@@ -164,7 +162,7 @@ void draw_polygons( struct matrix *polygons, screen s, zbuffer zb, color c ) {
     if ( normal[2] > 0 ) {
       
       //printf("polygon %d\n", point);
-      scanline_convert( polygons, point, s, zb );
+      scanline_convert( polygons, point, s, zb, c);
   }
 }
 }
