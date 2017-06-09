@@ -284,25 +284,6 @@ void my_main() {
     
     
     for (i=0;i<lastop;i++) {
-
-    	//TEMPORARY: FOR TESTING PURPOSES (Testing Zbuffering)
-    	if(i % 3 == 0)
-    	{
-    		g.green = g.red = 0;
-    		g.blue = 255;
-    	}
-    	else if(i % 3 == 1)
-    	{
-    		g.green = 255;
-    		g.blue = g.red = 0;
-    	}
-    	else
-    	{
-    		g.green = g.blue = 0;
-    		g.red = 255;
-    	}
-    	//////////////////////////////////
-
       //printf("%d: ",i);
       switch (op[i].opcode)
 	{
