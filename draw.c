@@ -606,7 +606,7 @@ void draw_line(int x0, int y0, double z0,
 
   x = x0;
   y = y0;
-  z = z0;
+  z = z0; dz = (z1 - z0) / (x1 - x0); //Now we can increment z by dz * (change in x) in each iteration.
   A = 2 * (y1 - y0);
   B = -2 * (x1 - x0);
   int wide = 0;
@@ -654,7 +654,6 @@ void draw_line(int x0, int y0, double z0,
     }
   }
 
-
   while ( loop_start < loop_end ) {
     
     plot( s, zb, c, x, y, z );
@@ -666,11 +665,13 @@ void draw_line(int x0, int y0, double z0,
       y+= dy_northeast;
       d+= d_northeast;
       x+= dx_northeast;
+      z += dz * dx_northeast;
     }
     else {
       x+= dx_east;
       y+= dy_east;
       d+= d_east;
+      z += dz * dx_east;
     }
     loop_start++;
   } //end drawing loop
