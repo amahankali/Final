@@ -41,9 +41,9 @@ void sortPointsY(double ** vertices, int len)
   }
 }
 
-
-void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb, color c) {
-
+/////////////////////////////////////////////Scanline implementations with different shading algorithms/////////////////////////////////////////////
+void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb, color c) 
+{
   double ** vertices = (double **) calloc(3, sizeof(double *));
 
   //initialize list of points
@@ -105,7 +105,85 @@ void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb, color
   free2DArray(vertices, 3);
   free(left); free(right);
   ///
+}
 
+void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb,
+  double Lr, double Lg, double Lb, double Lx, double Ly, double Lz, double Ar, double Ag, double Ab,
+  double KAr, double KDr, double KSr, double KAg, double KDg, double KSg, double KAb, double KDb, double KSb)
+{
+  double ** vertices = (double **) calloc(3, sizeof(double *));
+
+  //initialize list of points
+  int j, k;
+  for(j = 0; j < 3; j++)
+  {
+    vertices[j] = (double *) calloc(3, sizeof(double));
+    for(k = 0; k < 3; k++)
+    {
+      vertices[j][k] = points->m[k][i + j];
+    }
+  }
+
+  //get points in order
+  sortPointsY(vertices, 3);
+  double * B = vertices[0]; double * M = vertices[1]; double * T = vertices[2];
+
+  ////////////////////////////Decide Color////////////////////////////
+  color c; c.red = 0; c.green = 0; c.blue = 0;
+
+  //Ambient
+  
+
+  //Diffuse
+
+
+  //Specular
+
+
+  ////////////////////////////Draw////////////////////////////
+  double * left = (double *) calloc(3, sizeof(double)); //left will travel from B to T
+  double * right = (double *) calloc(3, sizeof(double)); //right will travel from B to M, then M to T
+
+  left[0] = right[0] = B[0]; left[1] = right[1] = B[1]; left[2] = right[2] = B[2];
+  double yCurrent = B[1];
+
+  while(yCurrent <= T[1]) //Note that B[1] is never equal to T[1], unless the triangle is degenerate.
+  {
+    //left
+    left[0] = B[0] + (T[0] - B[0]) * (yCurrent - B[1]) / (T[1] - B[1]);
+    left[1] = yCurrent;
+    left[2] = B[2] + (T[2] - B[2]) * (yCurrent - B[1]) / (T[1] - B[1]);
+
+    if(yCurrent < M[1]) //M[1] > B[1]
+    {
+      //right
+      right[0] = B[0] + (M[0] - B[0]) * (yCurrent - B[1]) / (M[1] - B[1]);
+      right[1] = yCurrent;
+      right[2] = B[2] + (M[2] - B[2]) * (yCurrent - B[1]) / (M[1] - B[1]);
+    }
+    else if(yCurrent > M[1])
+    {
+      //right
+      right[0] = M[0] + (T[0] - M[0]) * (yCurrent - M[1]) / (T[1] - M[1]);
+      right[1] = yCurrent;
+      right[2] = M[2] + (T[2] - M[2]) * (yCurrent - M[1]) / (T[1] - M[1]);
+    }
+    else
+    {
+      //right
+      right[0] = M[0];
+      right[1] = yCurrent;
+      right[2] = M[2];
+    }
+    draw_line(left[0], left[1], left[2], right[0], right[1], right[2], s, zb, c);
+    //printf("left: (%f, %f, %f) || right: (%f, %f, %f)\n", left[0], left[1], left[2], right[0], right[1], right[2]);
+    yCurrent++;
+  }
+
+  ///
+  free2DArray(vertices, 3);
+  free(left); free(right);
+  ///  
 
 }
 
@@ -127,10 +205,7 @@ Adds the vertices (x0, y0, z0), (x1, y1, z1)
 and (x2, y2, z2) to the polygon matrix. They
 define a single triangle surface.
 ====================*/
-void add_polygon( struct matrix *polygons, 
-		  double x0, double y0, double z0, 
-		  double x1, double y1, double z1, 
-		  double x2, double y2, double z2 ) {
+void add_polygon( struct matrix *polygons, double x0, double y0, double z0, double x1, double y1, double z1, double x2, double y2, double z2 ) {
 
   add_point(polygons, x0, y0, z0);
   add_point(polygons, x1, y1, z1);
@@ -181,9 +256,7 @@ void draw_polygons( struct matrix *polygons, screen s, zbuffer zb, color c ) {
   upper-left corner is (x, y, z) with width, 
   height and depth dimensions.
   ====================*/
-void add_box( struct matrix * polygons,
-	      double x, double y, double z,
-	      double width, double height, double depth ) {
+void add_box( struct matrix * polygons, double x, double y, double z, double width, double height, double depth ) {
 
   double x1, y1, z1;
   x1 = x+width;
@@ -228,9 +301,7 @@ void add_box( struct matrix * polygons,
   should call generate_sphere to create the
   necessary points
   ====================*/
-void add_sphere( struct matrix * edges, 
-		 double cx, double cy, double cz,
-		 double r, double step ) {
+void add_sphere( struct matrix * edges, double cx, double cy, double cz, double r, double step ) {
 
   struct matrix *points = generate_sphere(cx, cy, cz, r, step);
   int num_steps = (int)(1/step +0.1);
@@ -287,8 +358,7 @@ void add_sphere( struct matrix * edges,
 	   radius r.
 	   Returns a matrix of those points
   ====================*/
-struct matrix * generate_sphere(double cx, double cy, double cz,
-				double r, double step ) {
+struct matrix * generate_sphere(double cx, double cy, double cz, double r, double step ) {
 
   int num_steps = (int)(1/step +0.1);
   
@@ -339,9 +409,7 @@ struct matrix * generate_sphere(double cx, double cy, double cz,
   should call generate_torus to create the
   necessary points
   ====================*/
-void add_torus( struct matrix * edges, 
-		double cx, double cy, double cz,
-		double r1, double r2, double step ) {
+void add_torus( struct matrix * edges, double cx, double cy, double cz, double r1, double r2, double step ) {
   
   struct matrix *points = generate_torus(cx, cy, cz, r1, r2, step);
   int num_steps = (int)(1/step +0.1);
@@ -403,8 +471,7 @@ void add_torus( struct matrix * edges,
 	   radii r1 and r2.
 	   Returns a matrix of those points
   ====================*/
-struct matrix * generate_torus( double cx, double cy, double cz,
-				double r1, double r2, double step ) {
+struct matrix * generate_torus( double cx, double cy, double cz, double r1, double r2, double step ) {
   int num_steps = (int)(1/step +0.1);
   
   struct matrix *points = new_matrix(4, num_steps * num_steps);
@@ -447,9 +514,7 @@ struct matrix * generate_torus( double cx, double cy, double cz,
 
   Adds the circle at (cx, cy) with radius r to edges
   ====================*/
-void add_circle( struct matrix * edges, 
-		 double cx, double cy, double cz,
-		 double r, double step ) {
+void add_circle( struct matrix * edges, double cx, double cy, double cz, double r, double step ) {
   
   double x0, y0, x1, y1, t;
 
@@ -484,12 +549,7 @@ Adds the curve bounded by the 4 points passsed as parameters
 of type specified in type (see matrix.h for curve type constants)
 to the matrix points
 ====================*/
-void add_curve( struct matrix *edges, 
-		double x0, double y0, 
-		double x1, double y1, 
-		double x2, double y2, 
-		double x3, double y3, 
-		double step, int type ) {
+void add_curve( struct matrix *edges, double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, double step, int type ) {
 
   double t, x, y; 
   struct matrix *xcoefs;
@@ -547,9 +607,7 @@ Returns:
 add the line connecting (x0, y0, z0) to (x1, y1, z1) to points
 should use add_point
 ====================*/
-void add_edge( struct matrix * points, 
-	       double x0, double y0, double z0, 
-	       double x1, double y1, double z1) {
+void add_edge( struct matrix * points, double x0, double y0, double z0, double x1, double y1, double z1) {
   add_point( points, x0, y0, z0 );
   add_point( points, x1, y1, z1 );
 }
