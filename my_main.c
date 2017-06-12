@@ -266,11 +266,13 @@ void my_main() {
 
   for (f=0; f < num_frames; f++) {
 
+  	//store one color for ambient light
+  	//also keep a list of point sources of light
     systems = new_stack();
     tmp = new_matrix(4, 1000);
     clear_screen( t );
     clear_zbuffer(zb);
-    
+
     //if there are multiple frames, set the knobs
     if ( num_frames > 1 ) {      
       vn = knobs[f];
@@ -297,6 +299,17 @@ void my_main() {
 	    if ( symtab[j].type == SYM_VALUE )
 	      symtab[j].s.value = op[i].op.setknobs.value;
 	  break;
+
+	case SHADING: //where is the best place to put this?
+		break;
+
+	case AMBIENT:
+		break;
+
+	case LIGHT:
+		//add to symbol table
+		add_symbol(op[i].op.light.p->name, op[i].op.light.p->type, op[i].op.light.p->s);
+		break;
 	  
 	case SPHERE:
 	  /* printf("Sphere: %6.2f %6.2f %6.2f r=%6.2f", */

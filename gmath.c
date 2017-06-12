@@ -25,3 +25,9 @@ double *calculate_normal(struct matrix *polygons, int i) {
     
   return N;
 }
+
+void normalize(double * vector)
+{
+  double mag = sqrt(vector[0] * vector[0] + vector[1] * vector[1] + vector[2] * vector[2]);
+  vector[0] /= mag; vector[1] /= mag; vector[2] /= mag;
+}

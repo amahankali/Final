@@ -8,6 +8,13 @@
 #include "math.h"
 #include "gmath.h"
 
+int setInRange(int input)
+{
+  if(input > 255) return 255;
+  if(input < 0) return 0;
+  return input;
+}
+
 void free2DArray(double ** a, int len)
 {
   int i;
@@ -107,6 +114,7 @@ void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb, color
   ///
 }
 
+//change to list of light sources
 void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb,
   double Lr, double Lg, double Lb, double Lx, double Ly, double Lz, double Ar, double Ag, double Ab,
   double KAr, double KDr, double KSr, double KAg, double KDg, double KSg, double KAb, double KDb, double KSb)
@@ -130,15 +138,30 @@ void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb,
 
   ////////////////////////////Decide Color////////////////////////////
   color c; c.red = 0; c.green = 0; c.blue = 0;
+  double * normal = calculate_normal(points, i);
+  normalize(normal);
 
   //Ambient
-  
+  c.red += (int) Ar * KAr; c.green += (int) Ag * KAg; c.blue += (int) Ab * KAb;
 
+  //put diffuse and specular inside a loop when there is more than point source of light
   //Diffuse
+  double xAvg = (B[0] + M[0] + T[0]) / 3;
+  double yAvg = (B[1] + M[1] + T[1]) / 3;
+  double zAvg = (B[2] + M[2] + T[2]) / 3;
 
+  double dx = xAvg - Lx; double dy = yAvg - Ly; double dz = zAvg - Lz;
+  mag = sqrt(dx * dx + dy * dy + dz * dz);
+  dx /= mag; dy /= mag; dz /= mag;
+  double cos = abs(dx * normal[0] + dy * normal[1] + dz * normal[2]);
+
+  c.red += (int) (Lr * KDr * cos); c.green += (int) (Lg * KDg * cos); c.blue += (int) (Lb * KDb * cos);
 
   //Specular
+  
 
+  //
+  c.red = setInRange(c.red); c.green = setInRange(c.green); c.blue = setInRange(c.blue);
 
   ////////////////////////////Draw////////////////////////////
   double * left = (double *) calloc(3, sizeof(double)); //left will travel from B to T
@@ -183,6 +206,7 @@ void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb,
   ///
   free2DArray(vertices, 3);
   free(left); free(right);
+  free(normal);
   ///  
 
 }
@@ -241,6 +265,33 @@ void draw_polygons( struct matrix *polygons, screen s, zbuffer zb, color c ) {
   }
 }
 }
+
+//change to list of light sources
+void draw_polygons_flat(struct matrix * polygons, screen s, zbuffer zb,
+  double Lr, double Lg, double Lb, double Lx, double Ly, double Lz, double Ar, double Ag, double Ab,
+  double KAr, double KDr, double KSr, double KAg, double KDg, double KSg, double KAb, double KDb, double KSb) {
+  if(polygons->lastcol < 3) {
+    printf("Need at least 3 points to draw a polygon!\n");
+    return;
+  }
+
+  int point;
+  double * normal;
+
+  for(point = 0; point < polygons->lastcol - 2; point += 3) {
+
+    normal = calculate_normal(polygons, point);
+
+    if(normal[2] > 0) {
+      scanline_convert_flat(polygons, point, s, zb, Lr, Lg, Lb, Lx, Ly, Lz, Ar, Ag, Ab, KAr, KDr, KSr, KAg, KDg, KSg, KAb, KDb, KSb);
+    }
+
+  }
+
+
+}
+
+
 
 /*======== void add_box() ==========
   Inputs:   struct matrix * edges
