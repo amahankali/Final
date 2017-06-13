@@ -228,13 +228,6 @@ void print2DArray(double ** a, int M, int N)
 	}
 }
 
-void free2DArray(double ** a, int len)
-{
-  int i;
-  for(i = 0; i < len; i++) free(a[i]);
-  free(a);
-}
-
 /*======== void my_main() ==========
   Inputs: 
   Returns: 
@@ -583,8 +576,6 @@ void my_main() {
 
     free_stack( systems );
     free_matrix( tmp );
-    free2DArray(lightSources);
-    free2DArray(knobs);
     
     //save the correct image name for animation
     if (num_frames > 1) {
@@ -593,6 +584,9 @@ void my_main() {
       save_extension( t, frame_name );
     } //end frame saving
   }//end frame loop
+
+  free2DArray(lightSources, nextLS);
+  free2DArray(knobs, num_frames);
 
   //generate animated gif
   if (num_frames > 1)

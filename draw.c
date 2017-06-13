@@ -117,7 +117,7 @@ void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb, color
 
 void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb, double ** lightSources, int lSlength, color c_Ambient, struct constants * consts)
 {
-  int debug = 0;
+  int debug = 1;
 
   double ** vertices = (double **) calloc(3, sizeof(double *));
 
