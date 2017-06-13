@@ -1,7 +1,4 @@
-push
 sphere 250 250 250 100
-box 250 250 400 30 30 30
-sphere 100 250 3000 100
 display
 save box.png
 

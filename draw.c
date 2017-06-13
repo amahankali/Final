@@ -50,8 +50,10 @@ void sortPointsY(double ** vertices, int len)
 }
 
 /////////////////////////////////////////////Scanline implementations with different shading algorithms/////////////////////////////////////////////
-void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb, color c) 
+void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb, color c, double step) 
 {
+  int debug = 0;
+
   double ** vertices = (double **) calloc(3, sizeof(double *));
 
   //initialize list of points
@@ -68,6 +70,12 @@ void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb, color
   //get points in order
   sortPointsY(vertices, 3);
   double * B = vertices[0]; double * M = vertices[1]; double * T = vertices[2];
+
+  if(debug) printf("=================================================\n");
+  if(debug) printf("Polygon with vertices: \n");
+  if(debug) printf("B: (%f, %f, %f)\n", B[0], B[1], B[2]);
+  if(debug) printf("M: (%f, %f, %f)\n", M[0], M[1], M[2]);
+  if(debug) printf("T: (%f, %f, %f)\n", T[0], T[1], T[2]);
 
   ////////////////////////////Draw////////////////////////////
   double * left = (double *) calloc(3, sizeof(double)); //left will travel from B to T
@@ -104,9 +112,9 @@ void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb, color
       right[1] = yCurrent;
       right[2] = M[2];
     }
-    draw_line(left[0], left[1], left[2], right[0], right[1], right[2], s, zb, c);
-    //printf("left: (%f, %f, %f) || right: (%f, %f, %f)\n", left[0], left[1], left[2], right[0], right[1], right[2]);
-    yCurrent++;
+    draw_line((int) left[0], (int) left[1], left[2], (int) right[0], (int) right[1], right[2], s, zb, c);
+    if(debug) printf("left: (%f, %f, %f) || right: (%f, %f, %f)\n", left[0], left[1], left[2], right[0], right[1], right[2]);
+    yCurrent += step;
   }
 
   ///
@@ -115,9 +123,9 @@ void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb, color
   ///
 }
 
-void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb, double ** lightSources, int lSlength, color c_Ambient, struct constants * consts)
+void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb, double ** lightSources, int lSlength, color c_Ambient, struct constants * consts, double step)
 {
-  int debug = 1;
+  int debug = 0;
 
   double ** vertices = (double **) calloc(3, sizeof(double *));
 
@@ -224,9 +232,9 @@ void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb, 
       right[1] = yCurrent;
       right[2] = M[2];
     }
-    draw_line(left[0], left[1], left[2], right[0], right[1], right[2], s, zb, c_Polygon);
+    draw_line((int) left[0], (int) left[1], left[2], (int) right[0], (int) right[1], right[2], s, zb, c_Polygon);
     //printf("left: (%f, %f, %f) || right: (%f, %f, %f)\n", left[0], left[1], left[2], right[0], right[1], right[2]);
-    yCurrent++;
+    yCurrent += step;
   }
 
   ///
@@ -268,7 +276,7 @@ Goes through polygons 3 points at a time, drawing
 lines connecting each points to create bounding
 triangles
 ====================*/
-void draw_polygons( struct matrix *polygons, screen s, zbuffer zb, color c ) {
+void draw_polygons( struct matrix *polygons, screen s, zbuffer zb, color c, double step) {
   if ( polygons->lastcol < 3 ) {
     printf("Need at least 3 points to draw a polygon!\n");
     return;
@@ -284,12 +292,12 @@ void draw_polygons( struct matrix *polygons, screen s, zbuffer zb, color c ) {
     if ( normal[2] > 0 ) {
       
       //printf("polygon %d\n", point);
-      scanline_convert( polygons, point, s, zb, c);
+      scanline_convert( polygons, point, s, zb, c, step);
   }
   }
 }
 
-void draw_polygons_flat(struct matrix * polygons, screen s, zbuffer zb, double ** lightSources, int lSlength, color c_Ambient, struct constants * consts)
+void draw_polygons_flat(struct matrix * polygons, screen s, zbuffer zb, double ** lightSources, int lSlength, color c_Ambient, struct constants * consts, double step)
 {
   if(polygons->lastcol < 3)
   {
@@ -306,7 +314,7 @@ void draw_polygons_flat(struct matrix * polygons, screen s, zbuffer zb, double *
 
     if(normal[2] > 0)
     {
-      scanline_convert_flat(polygons, point, s, zb, lightSources, lSlength, c_Ambient, consts);
+      scanline_convert_flat(polygons, point, s, zb, lightSources, lSlength, c_Ambient, consts, step);
     }
 
   }

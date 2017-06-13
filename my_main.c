@@ -274,7 +274,8 @@ void my_main() {
   screen t;
   zbuffer zb;
   color c_Default;
-  double step = 0.05;
+  double step = 0.01;
+  double scanLineStep = 0.01;
   double theta;
   double knob_value, xval, yval, zval;
   
@@ -404,11 +405,11 @@ void my_main() {
 
 	  if(strcmp(shadingType, "wireframe") == 0)
 	  {
-	  	draw_polygons(tmp, t, zb, c_Default);
+	  	draw_polygons(tmp, t, zb, c_Default, scanLineStep);
 	  }
 	  else if(strcmp(shadingType, "flat") == 0)
 	  {
-	  	draw_polygons_flat(tmp, t, zb, lightSources, nextLS, c_Ambient, op[i].op.sphere.constants->s.c);
+	  	draw_polygons_flat(tmp, t, zb, lightSources, nextLS, c_Ambient, op[i].op.sphere.constants->s.c, scanLineStep);
 	  }
 	  tmp->lastcol = 0;
 	  break;
@@ -433,11 +434,11 @@ void my_main() {
 	  matrix_mult( peek(systems), tmp );
 	  if(strcmp(shadingType, "wireframe") == 0)
 	  {
-	  	draw_polygons(tmp, t, zb, c_Default);
+	  	draw_polygons(tmp, t, zb, c_Default, scanLineStep);
 	  }
 	  else if(strcmp(shadingType, "flat") == 0)
 	  {
-	  	draw_polygons_flat(tmp, t, zb, lightSources, nextLS, c_Ambient, op[i].op.torus.constants->s.c);
+	  	draw_polygons_flat(tmp, t, zb, lightSources, nextLS, c_Ambient, op[i].op.torus.constants->s.c, scanLineStep);
 	  }
 	  tmp->lastcol = 0;	  
 	  break;
@@ -465,11 +466,11 @@ void my_main() {
 	  //printf("about to draw\n");
 	  if(strcmp(shadingType, "wireframe") == 0)
 	  {
-	  	draw_polygons(tmp, t, zb, c_Default);
+	  	draw_polygons(tmp, t, zb, c_Default, scanLineStep);
 	  }
 	  else if(strcmp(shadingType, "flat") == 0)
 	  {
-	  	draw_polygons_flat(tmp, t, zb, lightSources, nextLS, c_Ambient, op[i].op.box.constants->s.c);
+	  	draw_polygons_flat(tmp, t, zb, lightSources, nextLS, c_Ambient, op[i].op.box.constants->s.c, scanLineStep);
 	  }
 	  //printf("finished box\n");
 	  tmp->lastcol = 0;
@@ -586,7 +587,6 @@ void my_main() {
   }//end frame loop
 
   free2DArray(lightSources, nextLS);
-  free2DArray(knobs, num_frames);
 
   //generate animated gif
   if (num_frames > 1)
