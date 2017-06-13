@@ -114,11 +114,9 @@ void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb, color
   ///
 }
 
-//change to list of light sources
-void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb,
-  double Lr, double Lg, double Lb, double Lx, double Ly, double Lz, double Ar, double Ag, double Ab,
-  double KAr, double KDr, double KSr, double KAg, double KDg, double KSg, double KAb, double KDb, double KSb)
+void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb, double ** lightSources, int lSlength, color c_Ambient, struct * constants consts)
 {
+
   double ** vertices = (double **) calloc(3, sizeof(double *));
 
   //initialize list of points
@@ -137,31 +135,43 @@ void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb,
   double * B = vertices[0]; double * M = vertices[1]; double * T = vertices[2];
 
   ////////////////////////////Decide Color////////////////////////////
-  color c; c.red = 0; c.green = 0; c.blue = 0;
+  color c_Polygon; c_Polygon.red = 0; c_Polygon.green = 0; c_Polygon.blue = 0;
   double * normal = calculate_normal(points, i);
   normalize(normal);
 
-  //Ambient
-  c.red += (int) Ar * KAr; c.green += (int) Ag * KAg; c.blue += (int) Ab * KAb;
+  //Handle Ambient Light
+  double KAr = consts->r[0]; double KAg = consts->g[0]; double KAb = consts->b[0];
+  c_Polygon.red += (int) c_Ambient.red * KAr; c_Polygon.green = (int) c_Ambient.green * KAg; c_Polygon.blue = (int) c_Ambient.blue * KAb;
 
-  //put diffuse and specular inside a loop when there is more than point source of light
-  //Diffuse
+  //Handle Diffuse and Specular Reflection
   double xAvg = (B[0] + M[0] + T[0]) / 3;
   double yAvg = (B[1] + M[1] + T[1]) / 3;
   double zAvg = (B[2] + M[2] + T[2]) / 3;
 
-  double dx = xAvg - Lx; double dy = yAvg - Ly; double dz = zAvg - Lz;
-  mag = sqrt(dx * dx + dy * dy + dz * dz);
-  dx /= mag; dy /= mag; dz /= mag;
-  double cos = abs(dx * normal[0] + dy * normal[1] + dz * normal[2]);
+  double KDr = consts->r[1]; double KDg = consts->g[1]; double KDb = consts->b[1];
 
-  c.red += (int) (Lr * KDr * cos); c.green += (int) (Lg * KDg * cos); c.blue += (int) (Lb * KDb * cos);
+  int currentlS;
+  for(currentlS = 0; currentlS < lSlength; currentlS++)
+  {
+    double * fields = lightSources[currentlS];
+    int Lr, Lg, Lb; double Lx, Ly, Lz;
+    Lr = (int) fields[0]; Lg = (int) fields[1]; Lb = (int) fields[2];
+    Lx = fields[3]; Ly = fields[4]; Lz = fields[5];
 
-  //Specular
-  
+    //DIFFUSE
+    double dx = xAvg - Lx; double dy = yAvg - Ly; double dz = zAvg - Lz;
+    double mag = sqrt(dx * dx + dy * dy + dz * dz);
+    dx /= mag; dy /= mag; dz /= mag;
+    double cos = abs(dx * normal[0] + dy * normal[1] + dz * normal[2]);
 
-  //
-  c.red = setInRange(c.red); c.green = setInRange(c.green); c.blue = setInRange(c.blue);
+    c_Polygon.red += (int) (Lr * KDr * cos); c_Polygon.green += (int) (Lg * KDg * cos); c_Polygon.blue += (int) (Lb * KDb * cos);
+
+    //SPECULAR
+
+  }
+
+  //Put color in ranges
+  c_Polygon.red = setInRange(c.red); c_Polygon.green = setInRange(c.green); c_Polygon.blue = setInRange(c.blue);
 
   ////////////////////////////Draw////////////////////////////
   double * left = (double *) calloc(3, sizeof(double)); //left will travel from B to T
@@ -198,7 +208,7 @@ void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb,
       right[1] = yCurrent;
       right[2] = M[2];
     }
-    draw_line(left[0], left[1], left[2], right[0], right[1], right[2], s, zb, c);
+    draw_line(left[0], left[1], left[2], right[0], right[1], right[2], s, zb, c_Polygon);
     //printf("left: (%f, %f, %f) || right: (%f, %f, %f)\n", left[0], left[1], left[2], right[0], right[1], right[2]);
     yCurrent++;
   }
@@ -208,10 +218,7 @@ void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb,
   free(left); free(right);
   free(normal);
   ///  
-
 }
-
-
 
 /*======== void add_polygon() ==========
 Inputs:   struct matrix *surfaces
@@ -263,14 +270,13 @@ void draw_polygons( struct matrix *polygons, screen s, zbuffer zb, color c ) {
       //printf("polygon %d\n", point);
       scanline_convert( polygons, point, s, zb, c);
   }
-}
+  }
 }
 
-//change to list of light sources
-void draw_polygons_flat(struct matrix * polygons, screen s, zbuffer zb,
-  double Lr, double Lg, double Lb, double Lx, double Ly, double Lz, double Ar, double Ag, double Ab,
-  double KAr, double KDr, double KSr, double KAg, double KDg, double KSg, double KAb, double KDb, double KSb) {
-  if(polygons->lastcol < 3) {
+void draw_polygons_flat(struct matrix * polygons, screen s, zbuffer zb, double ** lightSources, int lSlength, color c_Ambient, struct * constants consts)
+{
+  if(polygons->lastcol < 3)
+  {
     printf("Need at least 3 points to draw a polygon!\n");
     return;
   }
@@ -282,16 +288,13 @@ void draw_polygons_flat(struct matrix * polygons, screen s, zbuffer zb,
 
     normal = calculate_normal(polygons, point);
 
-    if(normal[2] > 0) {
-      scanline_convert_flat(polygons, point, s, zb, Lr, Lg, Lb, Lx, Ly, Lz, Ar, Ag, Ab, KAr, KDr, KSr, KAg, KDg, KSg, KAb, KDb, KSb);
+    if(normal[2] > 0)
+    {
+      scanline_convert_flat(polygons, point, s, zb, lightSources, lSlength, c_Ambient, consts);
     }
 
   }
-
-
 }
-
-
 
 /*======== void add_box() ==========
   Inputs:   struct matrix * edges
@@ -689,9 +692,7 @@ void draw_lines( struct matrix * points, screen s, zbuffer zb, color c) {
 	      s, zb, c);	       
 }// end draw_lines
 
-void draw_line(int x0, int y0, double z0,
-	       int x1, int y1, double z1,
-	       screen s, zbuffer zb, color c) {
+void draw_line(int x0, int y0, double z0, int x1, int y1, double z1, screen s, zbuffer zb, color c) {
   
   int x, y, d, A, B;
   int dy_east, dy_northeast, dx_east, dx_northeast, d_east, d_northeast;

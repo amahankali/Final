@@ -48,6 +48,10 @@
 #include "display.h"
 #include "draw.h"
 #include "stack.h"
+#define MAXLIGHTSOURCES 500
+#define FLATSHADE 0
+#define GOURAUDSHADE 1
+#define PHONGSHADE 2
 
 
 /*======== void first_pass() ==========
@@ -260,14 +264,62 @@ void my_main() {
   double knob_value, xval, yval, zval;
   
   g.red = 0;
-  g.green = 0;
+  g.green = 255;
   g.blue = 0;
+
+
+  ////////////////////////////////////////////LIGHTING/SHADING PASS////////////////////////////////////////////
+  char * shadingType = NULL;
+  color c_Ambient; c_Ambient.RED = 0; c_Ambient.green = 0; c_Ambient.blue = 0;
+
+  //light of point sources of light
+  double ** lightSources = malloc(MAXLIGHTSOURCES, sizeof(double *));
+  int lS;
+  for(lS = 0; lS < MAXLIGHTSOURCES; lS++)
+  {
+  	lightSources[ls] = malloc(6, sizeof(double));
+  	int field;
+  	for(field = 0; field < 6; field++) lightSources[lS][field] = 0;
+  }
+  int nextLS = 0;
+  //
+
+  //read everything related to shading
+  int operation;
+  for(operation = 0; operation < lastop; operation++)
+  {
+  	switch(op[i].opcode)
+  	{
+  		case SHADING:
+  			shadingType = op[i].op.shading.p->name;
+  			break;
+
+  		case AMBIENT:
+  			c_Ambient.red = op[i].op.ambient.c[0];
+  			c_Ambient.green = op[i].op.ambient.c[1];
+  			c_Ambient.blue = op[i].op.ambient.c[2];
+  			break;
+
+  		case LIGHT:
+  			//add to list of light sources
+  			lightSources[nextLS][0] = op[i].op.light.p->s.l->l[0];
+  			lightSources[nextLS][1] = op[i].op.light.p->s.l->l[1];
+  			lightSources[nextLS][2] = op[i].op.light.p->s.l->l[2];
+  			lightSources[nextLS][3] = op[i].op.light.p->s.l->c[0];
+  			lightSources[nextLS][4] = op[i].op.light.p->s.l->c[1];
+  			lightSources[nextLS][5] = op[i].op.light.p->s.l->c[2];
+  			nextLS++;
+  			break;
+  	}
+  }
+
+  if(shadingType == NULL) shadingType = "wireframe";
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 
   for (f=0; f < num_frames; f++) {
 
-  	//store one color for ambient light
-  	//also keep a list of point sources of light
     systems = new_stack();
     tmp = new_matrix(4, 1000);
     clear_screen( t );
@@ -299,17 +351,6 @@ void my_main() {
 	    if ( symtab[j].type == SYM_VALUE )
 	      symtab[j].s.value = op[i].op.setknobs.value;
 	  break;
-
-	case SHADING: //where is the best place to put this?
-		break;
-
-	case AMBIENT:
-		break;
-
-	case LIGHT:
-		//add to symbol table
-		add_symbol(op[i].op.light.p->name, op[i].op.light.p->type, op[i].op.light.p->s);
-		break;
 	  
 	case SPHERE:
 	  /* printf("Sphere: %6.2f %6.2f %6.2f r=%6.2f", */
