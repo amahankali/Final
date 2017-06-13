@@ -1,0 +1,21 @@
+shading flat
+ambient 0 0 255
+light CENTER 250 250 0 255 0 0
+light INTRUDER 250 250 2000 180 180 180
+constants assemblyRing 0.1 0.1 0.8 0.1 0.1 0.8 0.1 0.1 0.8
+constants spacePods 0.4 0.4 0.2 0.4 0.4 0.2 0.4 0.4 0.2
+
+basename spacePodsInFactory
+frames 100
+
+move 250 250 0
+torus assemblyRing 0 0 0 20 150
+
+push
+rotate y 360 orbit
+sphere spacePods 150 0 0 70
+sphere spacePods 0 0 150 70
+sphere spacePods -150 0 0 70
+sphere spacePods 0 0 -150 70
+
+vary orbit 0 99 0 1
