@@ -1,12 +1,3 @@
 Plan to implement flat shading
-1. Include light, ambient, constants commands in my_main
-2. Figure out how to get the draw.c methods to account for these factors when drawing.
-	Arguments Needed in draw.c:
-		- Ambient light: (r, g, b)
-		- Point light source: (x, y, z, r, g, b)
-		- Constants of the surface
-	Functions to change:
-		- scan_line
-		- draw_polygons
-		- draw_line (Flat shading is easier, since we do not actually have to modify draw_line)
-3. Update the sections in my_main which account for these - for each solid
+1. Finish scanline in draw.c
+2. Update my_main to reflect that we have two types of shading now

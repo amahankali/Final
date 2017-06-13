@@ -149,6 +149,7 @@ void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb, 
   double zAvg = (B[2] + M[2] + T[2]) / 3;
 
   double KDr = consts->r[1]; double KDg = consts->g[1]; double KDb = consts->b[1];
+  double KSr = consts->r[2]; double KSg = consts->g[2]; double KSb = consts->b[2];
 
   int currentlS;
   for(currentlS = 0; currentlS < lSlength; currentlS++)
@@ -168,6 +169,17 @@ void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb, 
 
     //SPECULAR
 
+    //First, find R - the path the light takes
+
+    dx *= -1; dy *= -1; dz *= -1; //vector from polygon to light source
+    //projection onto N
+    double projLen = cos;
+    double projX = normal[0] * cos; double projY = normal[1] * cos; double projZ = normal[2] * cos;
+    double SX = projX - dx; double SY = projY - dy; double SZ = projZ - dz;
+    double Rx = projX + SX; double Ry = projY + SY; double Rz = projZ + SZ; //reflected vector
+    mag = sqrt(Rx * Rx + Ry * Ry + Rz * Rz);
+    Rx /= mag; Ry /= mag; Rz /= mag;
+    c_Polygon.red += (int) (Lr * KSr * abs(Rz)); c_Polygon.green += (int) (Lg * KSg * abs(Rz)); c_Polygon.blue += (int) (Lb * KSb * abs(Rz));
   }
 
   //Put color in ranges
