@@ -3,6 +3,7 @@
 
 #include "matrix.h"
 #include "ml6.h"
+#include "symtab.h"
 
 void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb, color c);
 
@@ -12,6 +13,7 @@ void add_polygons( struct matrix * points,
 		   double x1, double y1, double z1,
 		   double x2, double y2, double z2);
 void draw_polygons( struct matrix * points, screen s, zbuffer zb, color c);
+void draw_polygons_flat(struct matrix * points, screen s, zbuffer zb, double ** lightSources, int lSlength, color c_Ambient, struct constants * consts);
 
 //3d shapes
 void add_box( struct matrix * edges,

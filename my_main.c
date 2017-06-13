@@ -53,7 +53,6 @@
 #define GOURAUDSHADE 1
 #define PHONGSHADE 2
 
-
 /*======== void first_pass() ==========
   Inputs:   
   Returns: 
@@ -215,6 +214,20 @@ void print_knobs() {
   }
 }
 
+void print(double ** a, int M, int N)
+{
+	int i, j;
+	for(i = 0; i < M; i++)
+	{
+		for(j = 0; j < N; j++)
+		{
+			if(j == 0) printf("%f", a[i][j]);
+			else printf(" %f", a[i][j]);
+		}
+		printf("\n");
+	}
+}
+
 /*======== void my_main() ==========
   Inputs: 
   Returns: 
@@ -246,6 +259,8 @@ void print_knobs() {
   ====================*/
 void my_main() {
 
+  int debugMain = 1;
+
   struct vary_node ** knobs;
   struct vary_node * vn;
   first_pass();
@@ -258,16 +273,16 @@ void my_main() {
   struct stack *systems;
   screen t;
   zbuffer zb;
-  color g;
-  double step = 0.1;
+  color c_Default;
+  double step = 0.05;
   double theta;
   double knob_value, xval, yval, zval;
   
-  g.red = 0;
-  g.green = 255;
-  g.blue = 0;
+  c_Default.red = 0;
+  c_Default.green = 255;
+  c_Default.blue = 0;
 
-
+  print_pcode();
   ////////////////////////////////////////////LIGHTING/SHADING PASS////////////////////////////////////////////
   char * shadingType = NULL;
   color c_Ambient; c_Ambient.red = 0; c_Ambient.green = 0; c_Ambient.blue = 0;
@@ -283,40 +298,56 @@ void my_main() {
   }
   int nextLS = 0;
   //
+  if(debugMain) printf("true\n");
 
   //read everything related to shading
   int operation;
   for(operation = 0; operation < lastop; operation++)
   {
-  	switch(op[i].opcode)
+  	switch(op[operation].opcode)
   	{
   		case SHADING:
-  			shadingType = op[i].op.shading.p->name;
+  			if(debugMain) printf("started shadingType\n");
+  			shadingType = op[operation].op.shading.p->name;
+  			if(debugMain) printf("finished shadingType\n");
   			break;
 
   		case AMBIENT:
-  			c_Ambient.red = op[i].op.ambient.c[0];
-  			c_Ambient.green = op[i].op.ambient.c[1];
-  			c_Ambient.blue = op[i].op.ambient.c[2];
+  			if(debugMain) printf("Started ambient\n");
+  			c_Ambient.red = (int) op[operation].op.ambient.c[0];
+  			c_Ambient.green = (int) op[operation].op.ambient.c[1];
+  			c_Ambient.blue = (int) op[operation].op.ambient.c[2];
+  			if(debugMain) printf("Ambient: (%f, %f, %f)\n", op[operation].op.ambient.c[0], op[operation].op.ambient.c[1], op[operation].op.ambient.c[2]);
   			break;
 
   		case LIGHT:
   			//add to list of light sources
-  			lightSources[nextLS][0] = op[i].op.light.p->s.l->l[0];
-  			lightSources[nextLS][1] = op[i].op.light.p->s.l->l[1];
-  			lightSources[nextLS][2] = op[i].op.light.p->s.l->l[2];
-  			lightSources[nextLS][3] = op[i].op.light.p->s.l->c[0];
-  			lightSources[nextLS][4] = op[i].op.light.p->s.l->c[1];
-  			lightSources[nextLS][5] = op[i].op.light.p->s.l->c[2];
+  			if(debugMain) printf("Started light\n");
+  			printf("Light: %s at: %6.2f %6.2f %6.2f",
+		 		op[operation].op.light.p->name,
+		 		op[operation].op.light.p->s.l->l[0], op[operation].op.light.p->s.l->l[1],
+		 		op[operation].op.light.p->s.l->l[2]);
+  			lightSources[nextLS][0] = op[operation].op.light.p->s.l->c[0];
+  			lightSources[nextLS][1] = op[operation].op.light.p->s.l->c[1];
+  			lightSources[nextLS][2] = op[operation].op.light.p->s.l->c[2];
+  			lightSources[nextLS][3] = op[operation].op.light.p->s.l->l[0];
+  			lightSources[nextLS][4] = op[operation].op.light.p->s.l->l[1];
+  			lightSources[nextLS][5] = op[operation].op.light.p->s.l->l[2];
   			nextLS++;
+  			if(debugMain) printf("Finished light\n");
   			break;
   	}
   }
+  if(debugMain) printf("finished shading initial pass\n");
+
+  //LIGHT SOURCES
+  if(debugMain) printf("Light Sources\n");
+  if(debugMain) print(lightSources, nextLS, 6);
 
   if(shadingType == NULL) shadingType = "wireframe";
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
+  if(debugMain) printf("Running frames\n");
 
   for (f=0; f < num_frames; f++) {
 
@@ -370,7 +401,15 @@ void my_main() {
 		     op[i].op.sphere.d[2],
 		     op[i].op.sphere.r, step);
 	  matrix_mult( peek(systems), tmp );
-	  draw_polygons(tmp, t, zb, g);
+
+	  if(strcmp(shadingType, "wireframe") == 0)
+	  {
+	  	draw_polygons(tmp, t, zb, c_Default);
+	  }
+	  else if(strcmp(shadingType, "flat") == 0)
+	  {
+	  	draw_polygons_flat(tmp, t, zb, lightSources, nextLS, c_Ambient, op[i].op.sphere.constants->s.c);
+	  }
 	  tmp->lastcol = 0;
 	  break;
 	case TORUS:
@@ -392,7 +431,14 @@ void my_main() {
 		    op[i].op.torus.d[2],
 		    op[i].op.torus.r0,op[i].op.torus.r1, step);
 	  matrix_mult( peek(systems), tmp );
-	  draw_polygons(tmp, t, zb, g);
+	  if(strcmp(shadingType, "wireframe") == 0)
+	  {
+	  	draw_polygons(tmp, t, zb, c_Default);
+	  }
+	  else if(strcmp(shadingType, "flat") == 0)
+	  {
+	  	draw_polygons_flat(tmp, t, zb, lightSources, nextLS, c_Ambient, op[i].op.torus.constants->s.c);
+	  }
 	  tmp->lastcol = 0;	  
 	  break;
 	case BOX:
@@ -417,7 +463,14 @@ void my_main() {
 		  op[i].op.box.d1[2]);
 	  matrix_mult( peek(systems), tmp );
 	  //printf("about to draw\n");
-	  draw_polygons(tmp, t, zb, g);
+	  if(strcmp(shadingType, "wireframe") == 0)
+	  {
+	  	draw_polygons(tmp, t, zb, c_Default);
+	  }
+	  else if(strcmp(shadingType, "flat") == 0)
+	  {
+	  	draw_polygons_flat(tmp, t, zb, lightSources, nextLS, c_Ambient, op[i].op.box.constants->s.c);
+	  }
 	  //printf("finished box\n");
 	  tmp->lastcol = 0;
 	  break;

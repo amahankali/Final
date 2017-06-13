@@ -117,6 +117,7 @@ void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb, color
 
 void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb, double ** lightSources, int lSlength, color c_Ambient, struct constants * consts)
 {
+  int debug = 1;
 
   double ** vertices = (double **) calloc(3, sizeof(double *));
 
@@ -141,6 +142,7 @@ void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb, 
   normalize(normal);
 
   //Handle Ambient Light
+  if(debug) printf("c_Ambient: (%d, %d, %d)\n", c_Ambient.red, c_Ambient.green, c_Ambient.blue);
   double KAr = consts->r[0]; double KAg = consts->g[0]; double KAb = consts->b[0];
   c_Polygon.red += (int) c_Ambient.red * KAr; c_Polygon.green = (int) c_Ambient.green * KAg; c_Polygon.blue = (int) c_Ambient.blue * KAb;
 
@@ -153,37 +155,38 @@ void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb, 
   double KSr = consts->r[2]; double KSg = consts->g[2]; double KSb = consts->b[2];
 
   int currentlS;
+  if(debug) printf("Number of point sources: %d\n", lSlength);
   for(currentlS = 0; currentlS < lSlength; currentlS++)
   {
     double * fields = lightSources[currentlS];
     int Lr, Lg, Lb; double Lx, Ly, Lz;
     Lr = (int) fields[0]; Lg = (int) fields[1]; Lb = (int) fields[2];
     Lx = fields[3]; Ly = fields[4]; Lz = fields[5];
+    if(debug) printf("Point Source Color: (%d, %d, %d). Point Source Location: (%f, %f, %f)\n", Lr, Lg, Lb, Lx, Ly, Lz);
 
     //DIFFUSE
-    double dx = xAvg - Lx; double dy = yAvg - Ly; double dz = zAvg - Lz;
-    double mag = sqrt(dx * dx + dy * dy + dz * dz);
-    dx /= mag; dy /= mag; dz /= mag;
-    double cos = fabs(dx * normal[0] + dy * normal[1] + dz * normal[2]);
-
+    double dx = Lx - xAvg; double dy = Ly - yAvg; double dz = Lz - zAvg; //vector from polygon to light source
+    double mag = sqrt(dx * dx + dy * dy + dz * dz); dx /= mag; dy /= mag; dz /= mag;
+    double cos = dx * normal[0] + dy * normal[1] + dz * normal[2];
+    if(cos < 0) continue; //polygon is facing away from light source - no specular reflection either
     c_Polygon.red += (int) (Lr * KDr * cos); c_Polygon.green += (int) (Lg * KDg * cos); c_Polygon.blue += (int) (Lb * KDb * cos);
 
     //SPECULAR
-
     //First, find R - the path the light takes
-
-    dx *= -1; dy *= -1; dz *= -1; //vector from polygon to light source
-    //projection onto N
+    //projection of d vector onto N:
     double projLen = cos;
     double projX = normal[0] * cos; double projY = normal[1] * cos; double projZ = normal[2] * cos;
     double SX = projX - dx; double SY = projY - dy; double SZ = projZ - dz;
     double Rx = projX + SX; double Ry = projY + SY; double Rz = projZ + SZ; //reflected vector
+    //now, magnitude of each color
     mag = sqrt(Rx * Rx + Ry * Ry + Rz * Rz);
     Rx /= mag; Ry /= mag; Rz /= mag;
-    c_Polygon.red += (int) (Lr * KSr * fabs(Rz)); c_Polygon.green += (int) (Lg * KSg * fabs(Rz)); c_Polygon.blue += (int) (Lb * KSb * fabs(Rz));
+    if(Rz < 0) continue;
+    c_Polygon.red += (int) (Lr * KSr * Rz); c_Polygon.green += (int) (Lg * KSg * Rz); c_Polygon.blue += (int) (Lb * KSb * Rz);
   }
 
   //Put color in ranges
+  if(debug) printf("c_Polygon: (%d, %d, %d)\n", c_Polygon.red, c_Polygon.green, c_Polygon.blue);
   c_Polygon.red = setInRange(c_Polygon.red); c_Polygon.green = setInRange(c_Polygon.green); c_Polygon.blue = setInRange(c_Polygon.blue);
 
   ////////////////////////////Draw////////////////////////////

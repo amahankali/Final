@@ -1,3 +1,0 @@
-Plan to implement flat shading
-1. Finish scanline in draw.c
-2. Update my_main to reflect that we have two types of shading now
