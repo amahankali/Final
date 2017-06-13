@@ -117,7 +117,7 @@ void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb, color
 
 void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb, double ** lightSources, int lSlength, color c_Ambient, struct constants * consts)
 {
-  int debug = 1;
+  int debug = 0;
 
   double ** vertices = (double **) calloc(3, sizeof(double *));
 
@@ -310,6 +310,7 @@ void draw_polygons_flat(struct matrix * polygons, screen s, zbuffer zb, double *
     }
 
   }
+  free(normal);
 }
 
 /*======== void add_box() ==========

@@ -214,7 +214,7 @@ void print_knobs() {
   }
 }
 
-void print(double ** a, int M, int N)
+void print2DArray(double ** a, int M, int N)
 {
 	int i, j;
 	for(i = 0; i < M; i++)
@@ -226,6 +226,13 @@ void print(double ** a, int M, int N)
 		}
 		printf("\n");
 	}
+}
+
+void free2DArray(double ** a, int len)
+{
+  int i;
+  for(i = 0; i < len; i++) free(a[i]);
+  free(a);
 }
 
 /*======== void my_main() ==========
@@ -342,7 +349,7 @@ void my_main() {
 
   //LIGHT SOURCES
   if(debugMain) printf("Light Sources\n");
-  if(debugMain) print(lightSources, nextLS, 6);
+  if(debugMain) print2DArray(lightSources, nextLS, 6);
 
   if(shadingType == NULL) shadingType = "wireframe";
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -576,6 +583,8 @@ void my_main() {
 
     free_stack( systems );
     free_matrix( tmp );
+    free2DArray(lightSources);
+    free2DArray(knobs);
     
     //save the correct image name for animation
     if (num_frames > 1) {
