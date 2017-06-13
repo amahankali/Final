@@ -7,6 +7,7 @@
 #include "matrix.h"
 #include "math.h"
 #include "gmath.h"
+#include "symtab.h"
 
 int setInRange(int input)
 {
@@ -114,7 +115,7 @@ void scanline_convert( struct matrix *points, int i, screen s, zbuffer zb, color
   ///
 }
 
-void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb, double ** lightSources, int lSlength, color c_Ambient, struct * constants consts)
+void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb, double ** lightSources, int lSlength, color c_Ambient, struct constants * consts)
 {
 
   double ** vertices = (double **) calloc(3, sizeof(double *));
@@ -163,7 +164,7 @@ void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb, 
     double dx = xAvg - Lx; double dy = yAvg - Ly; double dz = zAvg - Lz;
     double mag = sqrt(dx * dx + dy * dy + dz * dz);
     dx /= mag; dy /= mag; dz /= mag;
-    double cos = abs(dx * normal[0] + dy * normal[1] + dz * normal[2]);
+    double cos = fabs(dx * normal[0] + dy * normal[1] + dz * normal[2]);
 
     c_Polygon.red += (int) (Lr * KDr * cos); c_Polygon.green += (int) (Lg * KDg * cos); c_Polygon.blue += (int) (Lb * KDb * cos);
 
@@ -179,11 +180,11 @@ void scanline_convert_flat(struct matrix * points, int i, screen s, zbuffer zb, 
     double Rx = projX + SX; double Ry = projY + SY; double Rz = projZ + SZ; //reflected vector
     mag = sqrt(Rx * Rx + Ry * Ry + Rz * Rz);
     Rx /= mag; Ry /= mag; Rz /= mag;
-    c_Polygon.red += (int) (Lr * KSr * abs(Rz)); c_Polygon.green += (int) (Lg * KSg * abs(Rz)); c_Polygon.blue += (int) (Lb * KSb * abs(Rz));
+    c_Polygon.red += (int) (Lr * KSr * fabs(Rz)); c_Polygon.green += (int) (Lg * KSg * fabs(Rz)); c_Polygon.blue += (int) (Lb * KSb * fabs(Rz));
   }
 
   //Put color in ranges
-  c_Polygon.red = setInRange(c.red); c_Polygon.green = setInRange(c.green); c_Polygon.blue = setInRange(c.blue);
+  c_Polygon.red = setInRange(c_Polygon.red); c_Polygon.green = setInRange(c_Polygon.green); c_Polygon.blue = setInRange(c_Polygon.blue);
 
   ////////////////////////////Draw////////////////////////////
   double * left = (double *) calloc(3, sizeof(double)); //left will travel from B to T
@@ -285,7 +286,7 @@ void draw_polygons( struct matrix *polygons, screen s, zbuffer zb, color c ) {
   }
 }
 
-void draw_polygons_flat(struct matrix * polygons, screen s, zbuffer zb, double ** lightSources, int lSlength, color c_Ambient, struct * constants consts)
+void draw_polygons_flat(struct matrix * polygons, screen s, zbuffer zb, double ** lightSources, int lSlength, color c_Ambient, struct constants * consts)
 {
   if(polygons->lastcol < 3)
   {

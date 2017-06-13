@@ -270,14 +270,14 @@ void my_main() {
 
   ////////////////////////////////////////////LIGHTING/SHADING PASS////////////////////////////////////////////
   char * shadingType = NULL;
-  color c_Ambient; c_Ambient.RED = 0; c_Ambient.green = 0; c_Ambient.blue = 0;
+  color c_Ambient; c_Ambient.red = 0; c_Ambient.green = 0; c_Ambient.blue = 0;
 
   //light of point sources of light
-  double ** lightSources = malloc(MAXLIGHTSOURCES, sizeof(double *));
+  double ** lightSources = calloc(MAXLIGHTSOURCES, sizeof(double *));
   int lS;
   for(lS = 0; lS < MAXLIGHTSOURCES; lS++)
   {
-  	lightSources[ls] = malloc(6, sizeof(double));
+  	lightSources[lS] = calloc(6, sizeof(double));
   	int field;
   	for(field = 0; field < 6; field++) lightSources[lS][field] = 0;
   }
