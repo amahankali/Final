@@ -49,9 +49,6 @@
 #include "draw.h"
 #include "stack.h"
 #define MAXLIGHTSOURCES 500
-#define FLATSHADE 0
-#define GOURAUDSHADE 1
-#define PHONGSHADE 2
 
 /*======== void first_pass() ==========
   Inputs:   
